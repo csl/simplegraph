@@ -2,8 +2,14 @@
 #include<vector>
 #include<fstream>
 #include<cmath>
+#include<string>
+#include<cstring>
+#include<climits>
+//#include<stdio.h>
+#include<stdlib.h>
 
-#define DEBUG
+//#define DOUBLE_MAX  99999999999
+//#define DEBUG
 
 using namespace std;
 
@@ -25,41 +31,62 @@ public:
 		strcpy(id, mid);
 		previous = NULL;
 		dStart = INT_MAX;
-		ddStart = INT_MAX;
 		nodes.push_back(this);
+		lat=0;
+		lng=0;
+	}
+
+	void setLat(double mlat)
+	{
+		lat = mlat;
+	}
+
+	void setLng(double mlng)
+	{
+		lng = mlng;
+	}
+
+	double getLat()
+	{
+		return lat;
+	}
+
+	double getLng()
+	{
+		return lng;
 	}
 	
 public:
 	char id[255];
 	class Node* previous;
-	int dStart;
-	double ddStart;
+	double lat;
+	double lng;
+	double dStart;
 };
 
 class Edge
 {
 public:
-	Edge(Node* node1, Node* node2, int distance)
+	Edge(Node* node1, Node* node2, double distance)
 		: node1(node1), node2(node2), distance(distance)
 	{
 		edges.push_back(this);
 	}
+
 	bool Connects(Node* node1, Node* node2)
 	{
-		return (
-			(node1 == this->node1 &&
-			node2 == this->node2));
+		return ((node1 == this->node1 && node2 == this->node2));
 	}
 public:
 	Node* node1;
 	Node* node2;
-	int distance;
+	double distance;
 };
 
 class Path
 {
 public:
-	  Path(int th)
+	  Path(double th)
 	  {
 		 total = th;
 		 //path.push_back(this);
@@ -89,7 +116,7 @@ public:
       }
 
 private:
-	 int total;
+	 double total;
 	 vector<string> mpath;
 };
 
@@ -98,13 +125,13 @@ Node* Et(vector<Node*>& nodes)
 {
 	int size = nodes.size();
 	if (size == 0) return NULL;
+
 	int smallestPosition = 0;
 	Node* smallest = nodes.at(0);
 	for (int i=1; i<size; ++i)
 	{
 		Node* current = nodes.at(i);
-		if (current->dStart <
-			smallest->dStart)
+		if (current->dStart < smallest->dStart)
 		{
 			smallest = current;
 			smallestPosition = i;
@@ -178,7 +205,7 @@ void PrintRoute(Node* dest)
 	path->pushb();
 }
 
-int Distance(Node* node1, Node* node2)
+double Distance(Node* node1, Node* node2)
 {
 	const int size = edges.size();
 	for(int i=0; i<size; ++i)
@@ -199,11 +226,12 @@ void Das()
 		Node* smallest = Et(nodes);
 		vector<Node*>* adjacentNodes =
 			AdjacentNodes(smallest);
+
 		const int size = adjacentNodes->size();
 		for (int i=0; i<size; ++i)
 		{
 			Node* adjacent = adjacentNodes->at(i);
-			int distance = Distance(smallest, adjacent) +
+			double distance = Distance(smallest, adjacent) +
 				smallest->dStart;
 			if (distance < adjacent->dStart)
 			{
@@ -247,20 +275,37 @@ double GetDistance(double Lat1, double Long1, double Lat2, double Long2)
 	return d;
 }
 
+
+string LTrim(const string& str)
+{
+	return str.substr(str.find_first_not_of(" \n\r\t"));
+}
+
+string RTrim(const string& str)
+{
+	return str.substr(0,str.find_last_not_of(" \n\r\t")+1);
+}
+
+string trim(const string& str)
+{
+	if (!str.compare("")) return str;
+	return LTrim(RTrim(str));
+} 
 int main(int argc, char **argv)
 {
 	string sp;
 	char file_path[255]="";
-    class Node* a = NULL;
-    class Node* b = NULL;
+	class Node* a = NULL;
+    	class Node* b = NULL;
 	int weight=0;
 	char * pch;
 	char buffer[255]="";
+	char data[255]="";
 	int count=0;
 	int loop=0;
 	char dstart[255]="",dend[255]="";
 
-    cin >> file_path;
+    	cin >> file_path;
 
 	while (1)
 	{
@@ -282,40 +327,106 @@ int main(int argc, char **argv)
 	    {
 			getline(fin, sp);
 			strcpy( buffer, sp.c_str() );
-			
-			if (!strcmp(buffer,"<geometry>"))
+			sp = trim(sp);
+			if (!sp.compare("")) 
+					break;
+			else if (!sp.compare("<geometry>"))
 			{
 				//handler: loaction
 				while (1)
 				{
 					getline(fin, sp);
-					strcpy( buffer, sp.c_str() );
-					remove(sp.begin(), sp.end(), ' ');
-					if (sp.compare("<location>"))
+					sp = trim(sp);
+				
+					if (!sp.compare("<location>"))
 					{
+						//printf("location handling...\n");
 						//fetch id
 						getline(fin, sp);
-						remove(sp.begin(), sp.end(), ' ');
+						sp = trim(sp);
+						strcpy( buffer, sp.c_str() );
+
+						int ct=0;
+						for (int j=4; buffer[j] != '<' ;j++,ct++)
+							data[ct] = buffer[j];
+						data[ct]='\0';
+
+						a = findnode(data);
+						if (a == NULL)  a = new Node(data);
+						
 						//fetch lat
 						getline(fin, sp);
-						remove(sp.begin(), sp.end(), ' ');
-						
+						sp = trim(sp);
+						strcpy( buffer, sp.c_str() );
+						ct=0;
+						for (int j=5; buffer[j] != '<' ;j++,ct++)
+							data[ct] = buffer[j];
+						data[ct]='\0';
+
+						a->setLat(atof(data));
+
 						//fetch lng
 						getline(fin, sp);
-						remove(sp.begin(), sp.end(), ' ');
+						sp = trim(sp);
+						strcpy( buffer, sp.c_str() );
+						ct=0;
+						for (int j=5; buffer[j] != '<' ;j++,ct++)
+							data[ct] = buffer[j];
+						data[ct]='\0';
+						a->setLng(atof(data));
 						
 						continue;
 					}
-					else if (sp.compare("</location>"))
+					else if (!sp.compare("</location>"))
 					{
 						continue;
 					}
 
 					break;
 				}
-
-				//handler: link
 				
+				//handler: link
+				while (1)
+				{
+					strcpy( buffer, sp.c_str() );
+					int ct=0;
+					int j=0;
+
+					for (j=0; buffer[j] != '>' ;j++) ;
+					j++;
+					for (; buffer[j] != '<' ;j++)
+					{
+						if (buffer[j] == ' ')
+						{
+							data[ct]='\0';
+					        	a = findnode(data);
+							ct=0;
+							continue;
+						}
+
+						data[ct] = buffer[j];
+						ct++;
+					}
+					data[ct]='\0';
+				       b = findnode(data);
+					#ifdef DEBUG
+						cout << a->id << " -> " << b->id << endl;
+						cout << a->getLat() << "," << a->getLng() << endl;
+						cout << b->getLat() << "," << b->getLng() << endl;
+					#endif
+
+					double weight = GetDistance(a->getLat(), a->getLng(), 
+							b->getLat(), b->getLng());
+					
+					#ifdef DEBUG
+						cout << weight << endl;
+					#endif
+
+					Edge* e1 = new Edge(a, b, weight);
+
+					getline(fin, sp);
+					if (!sp.compare("</geometry>")) break;
+				}
 			}
 			else
 			{
@@ -328,14 +439,14 @@ int main(int argc, char **argv)
 						case 0:
 							a = findnode(pch);
 							if (a == NULL)  a = new Node(pch);
-			    			count++;
+			    				count++;
 							break;
 						case 1:
 							b = findnode(pch);
 							if (b == NULL)  b = new Node(pch);
-			    			count++;
+			    				count++;
 							break;
-					case 2:
+						case 2:
 							weight= atoi(pch);
 							//printf("%s -> %s, w=%d\n", a->id, b->id, weight);
 							Edge* e1 = new Edge(a, b, weight);
@@ -356,7 +467,7 @@ int main(int argc, char **argv)
 		//Cal ShortPath
 		a = findnode(dstart);
 		b = findnode(dend);
-		a->dStart = 0; // set start node
+		a->dStart = 0.0; // set start node
 		Das();
 		PrintRoute(b);
 	}
