@@ -7,18 +7,19 @@
 #include<climits>
 #include<cmath>
 #include<stdlib.h>
-#include <list>
-#include <map>
-#include <queue>
-#include <vector>
+#include<list>
+#include<map>
+#include<queue>
+#include<vector>
+#include<cstring>
 
 #define PI  4.0*atan(1.0)
 
-#define DEBUG
+//#define DEBUG
 
 using namespace std;
 
-class Edge; 
+class Edge;
 
 class Node
 {
@@ -46,7 +47,21 @@ class Tracker
 public:
 	  vector<string> id;
 	  double cost;
+	  void printTrakcer()
+	   {
+		cout << cost << " ";
+		if (cost != -1)
+		{
+			for (int i=id.size()-1; i>=0; i--)
+			{
+				cout << id[i] << " ";
+			}
+		}
+		cout << endl;
+	   }
 };
+
+vector<Tracker*> tp;
 
 class Edge 
 {
@@ -140,18 +155,47 @@ void dijkstra(string s,string t,NodeMap &nodes){
 		pq.pop();
 		curr->visited = true;
 
+
 		list<Edge*>::iterator edge;
 		for(edge = curr->neighbors.begin(); edge != curr->neighbors.end(); edge++){
 			Node *ne = (*edge)->dest;
 			if(!ne->visited){
 				ne->cost += (*edge)->weight + curr->cost;
 				ne->visited = true;
-				cout << " pushing " << ne->name << " cost " << ne->cost << endl;
 				ne->back_pointer = curr;
+				//cout << ne->name << " cost: " << ne->cost << endl;
 				pq.push(ne);
 			}
+			else{
+			} 
 		}
+
 	}
+
+	//find short path
+	Tracker *tk = new Tracker();
+	Node *ne = target;	
+	
+	if (ne->back_pointer==NULL)
+	{
+		tk->cost = -1;
+		tp.push_back(tk);
+		return;
+	}
+
+	int flag=0;	
+	while (ne->back_pointer!=NULL)
+	{
+		//cout << "id:" << ne->name << "," << ne->cost << endl;
+		tk->id.push_back(ne->name);
+		if (!flag)  tk->cost = ne->cost,flag=1;
+		ne = ne->back_pointer;
+	}
+
+	tk->id.push_back(source->name);
+	tp.push_back(tk);
+	//cout << "id:" << source->name << "," << source->cost << endl;
+	
 }
 
 double ConvertDegreeToRadians(double degrees)
@@ -234,12 +278,12 @@ int main(int argc, char **argv)
 					}
 					else if (dcounter == 2)
 					{
-                            int weight = atoi(dp);
-							printf("weight = %d\n",weight);
-							connector = new Edge(weight, dst);
-							src->neighbors.push_back(connector);
-                    }
-                    dp = strtok (NULL, " ");
+                            			int weight = atoi(dp);
+						//printf("weight = %d\n",weight);
+						connector = new Edge(weight, dst);
+						src->neighbors.push_back(connector);
+                   			 }
+                    			dp = strtok (NULL, " ");
 					dcounter++;
             	}          
 			}
@@ -360,19 +404,27 @@ int main(int argc, char **argv)
 		}
 
 		#ifdef DEBUG
-			cout << node_map;
+			//cout << node_map;
 		#endif
 
 		while (1)
 		{
 			cin >> fsrc;
 			if (!strcmp(fsrc.c_str(), "-1"))
-				exit(1);
+				break;
 			cin >> fdst;
 			dijkstra(fsrc, fdst, node_map);
-			cout << node_map;
+			//cout << node_map;
 		}
 
+
+		for (int i=0; i<tp.size(); i++)
+		{
+			Tracker *trp = tp[i];
+			trp->printTrakcer();
+		}
+
+		break;
 	}
 
 	return 0;
