@@ -86,8 +86,11 @@ public:
 class Path
 {
 public:
-	  Path(double th)
+	  Path(double th, int rep)
 	  {
+		if (rep == -1)
+		 total = -1;
+		else
 		 total = th;
 		 //path.push_back(this);
 	  }
@@ -104,6 +107,11 @@ public:
 
 	  void print()
 	  {
+			if (mpath.size()==1)
+			{
+				cout << -1 << endl;
+				return;
+			}
 			cout << total << " ";
 			if (total != -1)
 			{
@@ -178,7 +186,7 @@ vector<Node*>* AdjacentNodes(Node* node)
 	return adjacentNodes;
 }
 
-void PrintRoute(Node* dest)
+void PrintRoute(Node* dest, int rep)
 {
 	Node* p = dest;
 	Path* path = NULL;
@@ -189,17 +197,20 @@ void PrintRoute(Node* dest)
 	}
 	else
 	{
-		path = new Path(dest->dStart);
+		path = new Path(dest->dStart, rep);
 	}
 
 	if (dest->dStart != -1)
 	{
+	  if (rep != -1)
+	  {
 		while (p)
 		{
 		//cout << previous->id << " ";
 			path->setP(p->id);
 			p = p->previous;
 		}
+           }
 	}
 	//cout << endl;
 	path->pushb();
@@ -219,7 +230,7 @@ double Distance(Node* node1, Node* node2)
 	return -1; // should never happen
 }
 
-void Das()
+int Das()
 {
 	while (nodes.size() > 0)
 	{
@@ -231,8 +242,13 @@ void Das()
 		for (int i=0; i<size; ++i)
 		{
 			Node* adjacent = adjacentNodes->at(i);
-			double distance = Distance(smallest, adjacent) +
-				smallest->dStart;
+			double ds = Distance(smallest, adjacent);
+			if (ds == -1) 
+			{
+				//unlink
+				return -1;
+			}
+			double distance =  ds + smallest->dStart;
 			if (distance < adjacent->dStart)
 			{
 				adjacent->dStart = distance;
@@ -241,6 +257,8 @@ void Das()
 		}
 		delete adjacentNodes;
 	}
+
+	return 1;
 }
 
 class Node* findnode(char *p)
@@ -269,6 +287,9 @@ double GetDistance(double Lat1, double Long1, double Lat2, double Long2)
 	double Lat2r = ConvertDegreeToRadians(Lat2);
 	double Long1r = ConvertDegreeToRadians(Long1);
 	double Long2r = ConvertDegreeToRadians(Long2);
+
+	cout << Lat1 << "," << Lat2 << "," << Long1 << "," << Long2 << endl;
+
 	double R = 6371;
 	double d = acos(sin(Lat1r) * sin(Lat2r) + 
 			        cos(Lat1r) * cos(Lat2r) * cos(Long2r-Long1r))* R;
@@ -425,7 +446,7 @@ int main(int argc, char **argv)
 					Edge* e1 = new Edge(a, b, weight);
 
 					getline(fin, sp);
-					if (!sp.compare("</geometry>")) break;
+					if (!sp.compare("</geometry>\r")) break;
 				}
 			}
 			else
@@ -468,8 +489,8 @@ int main(int argc, char **argv)
 		a = findnode(dstart);
 		b = findnode(dend);
 		a->dStart = 0.0; // set start node
-		Das();
-		PrintRoute(b);
+		int rep = Das();
+		PrintRoute(b, rep);
 	}
 
 	for (int i=0; i<paths.size(); i++)
