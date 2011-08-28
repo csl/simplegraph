@@ -13,9 +13,7 @@
 #include<vector>
 #include<cstring>
 
-#define PI  4.0*atan(1.0)
-
-//#define DEBUG
+#define DEBUG
 
 using namespace std;
 
@@ -200,7 +198,7 @@ void dijkstra(string s,string t,NodeMap &nodes){
 
 double ConvertDegreeToRadians(double degrees)
 {
-	return (PI/180) * degrees;
+	return (M_PI/180) * degrees;
 }
 
 double GetDistance(double Lat1, double Long1, double Lat2, double Long2)
@@ -386,8 +384,11 @@ int main(int argc, char **argv)
 					mdata[mydata]='\0';
 					string id(mdata);
 					dst = node_map.find_in_nodemap(id);
+					cout << "id: " << id << endl;
+					cout << src->lat << "," << dst->lng << endl;
+					cout << src->lat << "," << dst->lng << endl;
 
-					double weight = GetDistance(src->lat, dst->lng, 
+					double weight = GetDistance(src->lat, src->lng, 
 							dst->lat, dst->lng);
 					
 					#ifdef DEBUG
@@ -398,7 +399,7 @@ int main(int argc, char **argv)
 					src->neighbors.push_back(connector);
 					
 					getline(openfile, datain);
-					if (!datain.compare("</geometry>")) break;
+					if (!datain.compare("</geometry>\r")) break;
 				}
 			}
 		}
