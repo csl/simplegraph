@@ -13,7 +13,7 @@
 #include<vector>
 #include<cstring>
 
-#define DEBUG
+//#define DEBUG
 
 using namespace std;
 
@@ -161,7 +161,6 @@ void dijkstra(string s,string t,NodeMap &nodes){
 				ne->cost += (*edge)->weight + curr->cost;
 				ne->visited = true;
 				ne->back_pointer = curr;
-				//cout << ne->name << " cost: " << ne->cost << endl;
 				pq.push(ne);
 			}
 			else{
@@ -203,14 +202,17 @@ double ConvertDegreeToRadians(double degrees)
 
 double GetDistance(double Lat1, double Long1, double Lat2, double Long2)
 {
-	double Lat1r = ConvertDegreeToRadians(Lat1);
-	double Lat2r = ConvertDegreeToRadians(Lat2);
-	double Long1r = ConvertDegreeToRadians(Long1);
-	double Long2r = ConvertDegreeToRadians(Long2);
-	double R = 6371;
-	double d = acos(sin(Lat1r) * sin(Lat2r) + 
-			        cos(Lat1r) * cos(Lat2r) * cos(Long2r-Long1r))* R;
-	return d;
+	double lat1r = ConvertDegreeToRadians(Lat1);
+	double lat2r = ConvertDegreeToRadians(Lat2);
+	double long1r = ConvertDegreeToRadians(Long1);
+	double long2r = ConvertDegreeToRadians(Long2);
+
+	double a = sin(ConvertDegreeToRadians(Lat2 - Lat1)/2) * sin(ConvertDegreeToRadians(Lat2 - Lat1)/2) + cos(lat1r) * cos(lat2r) * sin(ConvertDegreeToRadians(Long2 - Long1)/2) * sin(ConvertDegreeToRadians(Long2 - Long1)/2); 
+	double R = 6367;
+	double c = 2 * atan2(sqrt(a), sqrt(1-a)); 
+	double d = R * c;
+
+	return round(d);
 }
 
 string trim(const string& str)
@@ -294,6 +296,7 @@ int main(int argc, char **argv)
 					//Location tag
 					if (!datain.compare("<location>"))
 					{
+		       	      			int toDolatlng=0;
 						getline(openfile, datain);
 						datain = trim(datain);
 						strcpy( cdata, datain.c_str() );
@@ -312,39 +315,60 @@ int main(int argc, char **argv)
 						string from(mdata);
 						mnode = node_map.find_in_nodemap(from);
 
-                        getline(openfile, datain);
-                        datain = trim(datain);
-                        strcpy( cdata, datain.c_str() );
+					      getline(openfile, datain);
+					      datain = trim(datain);
+					      strcpy( cdata, datain.c_str() );
 
-                        mydata=0;
-                        r=5;
-                        while (1)
-                        {
-                            if (cdata[r] == '<') break;
-                            mdata[mydata] = cdata[r];
-                            mydata++;
-                            r++;
-                        }
-                        mdata[mydata]='\0';
+					      mydata=0;
+					      char blatlng[100]="";
+					      r=0;
+					      while (1)
+					      {
+						 if (cdata[r] == '>') break;
+						 blatlng[mydata] = cdata[r];
+						 mydata++;
+						 r++;
+					      }
+					      blatlng[mydata]='\0';
 
-						mnode->lat=atof(mdata);
+					      mydata=0;
+					      r=5;
+					      while (1)
+					      {
+						 if (cdata[r] == '<') break;
+						 mdata[mydata] = cdata[r];
+						 mydata++;
+						 r++;
+					      }
+					      mdata[mydata]='\0';
 
-                        getline(openfile, datain);
-                        datain = trim(datain);
-                        strcpy( cdata, datain.c_str() );
+					      if (!strcmp(blatlng, "<lat"))
+					       {
+					      	mnode->lat=atof(mdata);
+						toDolatlng=1;
+					       }
+					      else
+					      	mnode->lng=atof(mdata);
 
-                        mydata=0;
-                        r=5;
-                        while (1)
-                        {
-                            if (cdata[r] == '<') break;
-                            mdata[mydata] = cdata[r];
-                            mydata++;
-                            r++;
-                        }
-                        mdata[mydata]='\0';
+					      getline(openfile, datain);
+					      datain = trim(datain);
+					      strcpy( cdata, datain.c_str() );
 
-                        mnode->lng=atof(mdata);
+					      mydata=0;
+					      r=5;
+				              while (1)
+					        {
+						 if (cdata[r] == '<') break;
+						 mdata[mydata] = cdata[r];
+						 mydata++;
+						 r++;
+					        }
+                                          mdata[mydata]='\0';
+					
+					      if (toDolatlng == 0)
+					      	mnode->lat=atof(mdata);
+					      else
+					      	mnode->lng=atof(mdata);
 						
 						continue;
 					}
@@ -384,10 +408,11 @@ int main(int argc, char **argv)
 					mdata[mydata]='\0';
 					string id(mdata);
 					dst = node_map.find_in_nodemap(id);
-					cout << "id: " << id << endl;
-					cout << src->lat << "," << dst->lng << endl;
-					cout << src->lat << "," << dst->lng << endl;
-
+					#ifdef DEBUG
+						cout << "id: " << id << endl;
+						cout << src->lat << "," << src->lng << endl;
+						cout << dst->lat << "," << dst->lng << endl;
+					#endif
 					double weight = GetDistance(src->lat, src->lng, 
 							dst->lat, dst->lng);
 					
@@ -399,7 +424,8 @@ int main(int argc, char **argv)
 					src->neighbors.push_back(connector);
 					
 					getline(openfile, datain);
-					if (!datain.compare("</geometry>\r")) break;
+					datain = trim(datain);
+					if (!datain.compare("</geometry>")) break;
 				}
 			}
 		}
